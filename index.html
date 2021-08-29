@@ -1,0 +1,166 @@
+<html lang="en">
+
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"
+    integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"
+    integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <title>GRE Dictation</title>
+  <style>
+    #textarea {
+      width: 800px;
+      height: 300px;
+
+    }
+  </style>
+</head>
+
+<body class="container mt-5 bg-dark">
+  <h1 class="text-light">GRE Dictation</h1>
+  <p class="lead text-light mt-4">Select Voice</p>
+  <select id="voices" class="form-select bg-secondary text-light"></select>
+
+  <div>
+    <p class="lead text-light">Start</p>
+    <input type="number" id="s" />
+    <span id="s-label" class="ms-2">1</span>
+  </div>
+  <div>
+    <p class="lead text-light">End</p>
+    <input type="number" id="e" />
+    <span id="e-label" class="ms-2">1</span>
+  </div>
+  <div>
+    <button id="getData" class="btn btn-success mt-5 me-3" onclick="getData()">Get Data</button>
+    <span id="fileUploader-label" class="ms-2">1</span>
+  </div>
+
+  <div class="d-flex mt-4 text-light">
+    <div>
+      <p class="lead">Volume</p>
+      <input type="range" min="0" max="1" value="1" step="0.1" id="volume" />
+      <span id="volume-label" class="ms-2">1</span>
+    </div>
+    <div class="mx-5">
+      <p class="lead">Rate</p>
+      <input type="range" min="0.1" max="10" value="1" id="rate" step="0.1" />
+      <span id="rate-label" class="ms-2">1</span>
+    </div>
+    <div>
+      <p class="lead">Pitch</p>
+      <input type="range" min="0" max="2" value="1" step="0.1" id="pitch" />
+      <span id="pitch-label" class="ms-2">1</span>
+    </div>
+  </div>
+  <div class="form-control bg-dark text-light mt-5" id="textarea"></div>
+  <div class="mb-5">
+    <button id="start" class="btn btn-success mt-5 me-3">Start</button>
+    <button id="answer" class="btn btn-warning mt-5 me-3">Answer</button>
+    <button id="next" class="btn btn-info mt-5 me-3">Next</button>
+    <!-- <button id="cancel" class="btn btn-danger mt-5 me-3">Cancel</button> -->
+  </div>
+</body>
+<!-- script tag goes here -->
+<script>
+
+  let speech = new SpeechSynthesisUtterance();
+  speech.lang = "en";
+
+  let voices = [];
+  window.speechSynthesis.onvoiceschanged = () => {
+    voices = window.speechSynthesis.getVoices();
+    speech.voice = voices[0];
+    let voiceSelect = document.querySelector("#voices");
+    voices.forEach((voice, i) => (voiceSelect.options[i] = new Option(voice.name, i)));
+  };
+
+  var rows = []
+
+  var count = 1
+
+  var spider = {}
+
+
+  const getData = () => {
+    axios.get('https://sheetdb.io/api/v1/al0nqupaucdz2')
+      .then(function (response) {
+        rows = response.data.slice(Number(document.querySelector("#s").value) - 1, Number(document.querySelector("#e").value)).sort(() => Math.random() - 0.5)
+        console.log(rows)
+
+      })
+      .catch(function (error) {
+        console.log(error)
+      });
+  }
+
+
+
+  document.querySelector("#rate").addEventListener("input", () => {
+    const rate = document.querySelector("#rate").value;
+    speech.rate = rate;
+    document.querySelector("#rate-label").innerHTML = rate;
+  });
+
+  document.querySelector("#volume").addEventListener("input", () => {
+    const volume = document.querySelector("#volume").value;
+    speech.volume = volume;
+    document.querySelector("#volume-label").innerHTML = volume;
+  });
+
+  document.querySelector("#pitch").addEventListener("input", () => {
+    const pitch = document.querySelector("#pitch").value;
+    speech.pitch = pitch;
+    document.querySelector("#pitch-label").innerHTML = pitch;
+  });
+
+  document.querySelector("#voices").addEventListener("change", () => {
+    speech.voice = voices[document.querySelector("#voices").value];
+  });
+
+  document.querySelector("#start").addEventListener("click", () => {
+    spider = rows.pop()
+    speech.text = spider.Word
+    document.getElementById("textarea").innerText = `${count++}.${spider.Word}`
+    window.speechSynthesis.speak(speech);
+    document.querySelector("#start").style.visibility = 'hidden'
+  });
+
+  document.querySelector("#answer").addEventListener("click", () => {
+    var ul = document.createElement('ul');
+    document.getElementById("textarea").appendChild(ul)
+    document.getElementById("textarea").style.wordWrap = "break-word";
+    var li = document.createElement('li');
+
+    for (const property in spider) {
+      console.log(`${property}: ${spider[property]}`);
+      var li = document.createElement('li')
+      ul.appendChild(li);
+      li.innerHTML = `${property}: ${spider[property]}`;
+    }
+
+  });
+
+  document.querySelector("#next").addEventListener("click", () => {
+    spider = rows.pop()
+    speech.text = spider.Word
+    document.getElementById("textarea").innerText = `${count++}.${spider.Word}`
+    window.speechSynthesis.speak(speech);
+  });
+
+
+
+// document.querySelector("#cancel").addEventListener("click", () => {
+//   window.speechSynthesis.cancel();
+//   document.querySelector("#start").style.visibility = 'visible'
+// });
+
+
+
+
+</script>
+
+
+</html>
