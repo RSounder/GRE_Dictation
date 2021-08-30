@@ -138,7 +138,7 @@
       console.log(`${property}: ${spider[property]}`);
       var li = document.createElement('li')
       ul.appendChild(li);
-      li.innerHTML = `${property}: ${spider[property]}`;
+      li.innerHTML = `${property}: ${spider[property].replace(/(^[,\s]+)|([,\s]+$)/g, '')}`;
     }
 
   });
